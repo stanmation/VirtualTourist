@@ -10,20 +10,18 @@ import UIKit
 import MapKit
 import CoreData
 
-
 class MapViewController: UIViewController, NSFetchedResultsControllerDelegate {
     
+    @IBOutlet weak var editButton: UIButton!
     @IBOutlet weak var mapView: MKMapView!
     
-    var annotations = [MKPointAnnotation]()
+    var inEditingMode = false
+    
     var annotationView: MKAnnotationView?
     
-    let delegate = UIApplication.sharedApplication().delegate as! AppDelegate
-    var stack: CoreDataStack?
+    let stack = (UIApplication.sharedApplication().delegate as! AppDelegate).stack
 
-    
     var fetchedResultsController: NSFetchedResultsController?
-    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -31,17 +29,14 @@ class MapViewController: UIViewController, NSFetchedResultsControllerDelegate {
         // set up gesture for the map
         let addPin = UILongPressGestureRecognizer(target: self, action: #selector(addPin(_:)))
         mapView.addGestureRecognizer(addPin)
-        
-        // Get the stack
-        stack = delegate.stack
-        
+
         // Create a fetchrequest
         let fr = NSFetchRequest(entityName: "Pin")
         fr.sortDescriptors = []
 
         // Create the FetchedResultsController
         
-        fetchedResultsController = NSFetchedResultsController(fetchRequest: fr, managedObjectContext: stack!.context, sectionNameKeyPath: nil, cacheName: nil)
+        fetchedResultsController = NSFetchedResultsController(fetchRequest: fr, managedObjectContext: stack.context, sectionNameKeyPath: nil, cacheName: nil)
         
         do {
             try fetchedResultsController!.performFetch()
@@ -56,14 +51,28 @@ class MapViewController: UIViewController, NSFetchedResultsControllerDelegate {
                 let pin = object as! Pin
                 let annotation = MKPointAnnotation()
                 annotation.coordinate = CLLocationCoordinate2D(latitude: pin.latitude, longitude: pin.longitude)
-                annotations.append(annotation)
+                mapView.addAnnotation(annotation)
+
             }
-            mapView.addAnnotations(annotations)
         }
         
-
     }
     
+    
+    @IBAction func editButtonTapped(sender: UIButton) {
+        if editButton.currentTitle == "Edit" {
+            // set to editingMode
+            editButton.setTitle("Done", forState: .Normal)
+            inEditingMode = true
+        } else if editButton.currentTitle == "Done" {
+            // finish editingMode
+            editButton.setTitle("Edit", forState: .Normal)
+            inEditingMode = false
+        }
+    }
+    
+    
+    // add pin to the mapView
     func addPin(sender: UILongPressGestureRecognizer!) {
         if sender.state == UIGestureRecognizerState.Began {
             
@@ -72,69 +81,27 @@ class MapViewController: UIViewController, NSFetchedResultsControllerDelegate {
             let newCoordinate = mapView.convertPoint(touchPoint, toCoordinateFromView: mapView)
             let annotation = MKPointAnnotation()
             annotation.coordinate = newCoordinate
-            self.annotations.append(annotation)
-            mapView.addAnnotations(annotations)
+            mapView.addAnnotation(annotation)
             
             var pin: Pin?
             
-            stack?.performBackgroundBatchOperation({ (workerContext) in
+            stack.performBackgroundBatchOperation({ (workerContext) in
                 pin = Pin(latitude: annotation.coordinate.latitude, longitude: annotation.coordinate.longitude, context: workerContext)
                 print("Just created a pin: \(pin)")
             })
-
-            Client.sharedInstance().displayImageFromFlickrBySearch(annotation, completionHandler: { (results, errorString) in
-                performUIUpdatesOnMain{
-                    self.generatePhotos(pin!, imageURLs: results)
-                }
-            })
-                
+            
+            stack.save()
+            
         }
     }
-    
-    
-    // generate photo objects from the pin
-    func generatePhotos(pin: Pin, imageURLs: [String]) {
 
-        stack?.performBackgroundBatchOperation({ (workerContext) in
-            for imageURL in imageURLs {
-                let photo = Photo(urlString: imageURL, context: workerContext)
-                photo.pin = pin
-  
-                print("Just created a photo: \(photo)")
-                
-                Client.sharedInstance().getImage(photo.url) { (result, error) in
-                    self.generatePhotoData(photo.url!, data: result)
-                }
-            }
-            print("==== finished background operation ====")
-        })
-        
-
-    }
-    // generate photoData from the photo url
-    func generatePhotoData(urlString: String, data: NSData) {
-        stack?.performBackgroundBatchOperation({ (workerContext) in
-            
-            let fr = NSFetchRequest(entityName: "Photo")
-            let predicate = NSPredicate(format: "url == %@", urlString)
-            fr.predicate = predicate
-            fr.sortDescriptors = [NSSortDescriptor(key: "dateUpdated", ascending: true)]
-            
-            guard let photos = try? workerContext.executeFetchRequest(fr) as! [Photo] else {
-                return
-            }
-            
-            let photo = photos[0]
-            photo.imageData = data
-            
-        })
-        
-    }
     
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
         print("perform segue")
         if segue.identifier == "showAlbum" {
             if segue.destinationViewController is PhotoAlbumViewController {
+                
+                navigationItem.backBarButtonItem = UIBarButtonItem(title: "OK", style: UIBarButtonItemStyle.Plain, target: nil, action: nil)
                 
                 let pin = sender as! Pin
                 print("pin is \(pin) ")
@@ -143,28 +110,28 @@ class MapViewController: UIViewController, NSFetchedResultsControllerDelegate {
                 let predicate = NSPredicate(format: "pin == %@", pin)
                 fr.predicate = predicate
                 fr.sortDescriptors = [NSSortDescriptor(key: "dateUpdated", ascending: true)]
-
-                guard let photos = try? stack?.context.executeFetchRequest(fr) as! [Photo] else {
-                    print("An error occurred while retrieving photos for selected pin!")
-                    return
-                }
-                
-                print("put photos1: \(photos)")
                 
                 let controller = segue.destinationViewController as! PhotoAlbumViewController
                 controller.fetchRequest = fr
                 controller.pin = pin
+                
+                
+                // check if photo exists in maincontext, then we set photoExist = true if there is
+                guard let photos = try? stack.context.executeFetchRequest(fr) as! [Photo] else {
+                    print("An error occurred while retrieving photos for selected pin!")
+                    return
+                }
+                
+                if photos != [] {
+                    controller.photoExist = true
+                }
             }
-
         }
     }
     
     
     // MARK: Delegate methods
     func mapView(mapView: MKMapView, didSelectAnnotationView view: MKAnnotationView) {
-        print("did select annotation")
-        
-        stack?.save()
         
         mapView.deselectAnnotation(view.annotation , animated: false)
         
@@ -175,21 +142,30 @@ class MapViewController: UIViewController, NSFetchedResultsControllerDelegate {
         let predicate = NSPredicate(format: "latitude == %lf && longitude == %lf", pinLat, pinLon)
         fr.predicate = predicate
         
-        guard let pinsFound =
-            try? stack!.context.executeFetchRequest(fr) as! [Pin] where pinsFound.count == 1 else {
-                
-                print("Unable to locate selected pin in database!")
-                return
+        if inEditingMode {
+            guard let pinsFound =
+                try? stack.context.executeFetchRequest(fr) as! [Pin] where pinsFound.count == 1 else {
+                    print("Unable to locate selected pin ManangedObject in database!")
+                    return
+            }
+            
+            let pin = pinsFound[0] as NSManagedObject
+            
+            mapView.removeAnnotation(view.annotation!)
+            stack.context.deleteObject(pin)
+            
+        } else {
+            guard let pinsFound =
+                try? stack.context.executeFetchRequest(fr) as! [Pin] where pinsFound.count == 1 else {
+                    
+                    print("Unable to locate selected pin in database!")
+                    return
+            }
+            performSegueWithIdentifier("showAlbum", sender: pinsFound[0])
         }
         
-        performSegueWithIdentifier("showAlbum", sender: pinsFound[0])
 
     }
-    
-    func controllerWillChangeContent(controller: NSFetchedResultsController) {
-        print("change content")
-    }
-    
 
 }
 

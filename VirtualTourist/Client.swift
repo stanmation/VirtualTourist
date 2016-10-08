@@ -14,10 +14,9 @@ class Client: NSObject {
     
     let delegate = UIApplication.sharedApplication().delegate as! AppDelegate
     
-    private func bboxString(annotation: MKPointAnnotation!) -> String {
+    private func bboxString(latitude: Double, longitude: Double) -> String {
         // ensure bbox is bounded by minimum and maximums
-        let latitude = annotation.coordinate.latitude
-        let longitude = annotation.coordinate.longitude
+
         let minimumLon = max(longitude - Constants.Flickr.SearchBBoxHalfWidth, Constants.Flickr.SearchLonRange.0)
         let minimumLat = max(latitude - Constants.Flickr.SearchBBoxHalfHeight, Constants.Flickr.SearchLatRange.0)
         let maximumLon = min(longitude + Constants.Flickr.SearchBBoxHalfWidth, Constants.Flickr.SearchLonRange.1)
@@ -28,12 +27,12 @@ class Client: NSObject {
     
     // MARK: Flickr API
     
-    func displayImageFromFlickrBySearch(annotation: MKPointAnnotation, completionHandler: (results: [String], errorString: String?) -> Void) {
+    func displayImageFromFlickrBySearch(latitude: Double, longitude: Double, completionHandler: (results: [String], errorString: String?) -> Void) {
         
         let methodParameters = [
             Constants.FlickrParameterKeys.Method: Constants.FlickrParameterValues.SearchMethod,
             Constants.FlickrParameterKeys.APIKey: Constants.FlickrParameterValues.APIKey,
-            Constants.FlickrParameterKeys.BoundingBox: bboxString(annotation),
+            Constants.FlickrParameterKeys.BoundingBox: bboxString(latitude, longitude: longitude),
             Constants.FlickrParameterKeys.SafeSearch: Constants.FlickrParameterValues.UseSafeSearch,
             Constants.FlickrParameterKeys.PerPage: Constants.FlickrParameterValues.PerPage,
             Constants.FlickrParameterKeys.Extras: Constants.FlickrParameterValues.MediumURL,
@@ -194,13 +193,6 @@ class Client: NSObject {
                     }
                     
                     imageUrlStrings.append(imageUrlString)
-                    
-
-                    
-    //                        self.getImage(imageUrlString, completionHandlerForGetImage: { (result, error) in
-    //                            photo.imageData = result
-    //                        })
-                    
             
                 }
                 
@@ -215,7 +207,8 @@ class Client: NSObject {
     }
     
     func getImage(imageURL: String!, completionHandlerForGetImage: (result: NSData, error: NSError?) -> Void) {
-
+        print("getImage")
+        
         // get the URL of the image
         let url = NSURL(string: imageURL)
         
