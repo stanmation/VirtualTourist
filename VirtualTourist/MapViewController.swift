@@ -19,6 +19,9 @@ class MapViewController: UIViewController, NSFetchedResultsControllerDelegate {
     
     var annotationView: MKAnnotationView?
     
+    // this is use to drag and drop the annotation
+    var mutableAnnotation: MKPointAnnotation?
+    
     let stack = (UIApplication.sharedApplication().delegate as! AppDelegate).stack
 
     var fetchedResultsController: NSFetchedResultsController?
@@ -74,24 +77,42 @@ class MapViewController: UIViewController, NSFetchedResultsControllerDelegate {
     
     // add pin to the mapView
     func addPin(sender: UILongPressGestureRecognizer!) {
-        if sender.state == UIGestureRecognizerState.Began {
-            
-            // make annotation our of the touch
-            let touchPoint = sender.locationInView(mapView)
-            let newCoordinate = mapView.convertPoint(touchPoint, toCoordinateFromView: mapView)
-            let annotation = MKPointAnnotation()
-            annotation.coordinate = newCoordinate
-            mapView.addAnnotation(annotation)
-            
+        // make annotation our of the touch
+        let touchPoint = sender.locationInView(mapView)
+        let newCoordinate = mapView.convertPoint(touchPoint, toCoordinateFromView: mapView)
+
+        switch(sender.state) {
+        case .Began:
+            mutableAnnotation = MKPointAnnotation()
+            mutableAnnotation?.coordinate = newCoordinate
+            mapView.addAnnotation(mutableAnnotation!)
+            break
+        case .Changed:
+            mutableAnnotation?.coordinate = newCoordinate
+            break
+        case .Ended:
             var pin: Pin?
+//            stack.performBackgroundBatchOperation({ (workerContext) in
+//                pin = Pin(latitude: self.mutableAnnotation!.coordinate.latitude, longitude: self.mutableAnnotation!.coordinate.longitude, context: workerContext)
+//                print("Just created a pin: \(pin)")
+//            })
             
-            stack.performBackgroundBatchOperation({ (workerContext) in
-                pin = Pin(latitude: annotation.coordinate.latitude, longitude: annotation.coordinate.longitude, context: workerContext)
+            stack.backgroundContext.performBlockAndWait {
+                pin = Pin(latitude: self.mutableAnnotation!.coordinate.latitude, longitude: self.mutableAnnotation!.coordinate.longitude, context: self.stack.backgroundContext)
                 print("Just created a pin: \(pin)")
-            })
+                do {
+                    try self.stack.backgroundContext.save()
+                } catch {
+                    fatalError("Error while saving backgroundContext: \(error)")
+                }
+            }
             
-            stack.save()
             
+//            stack.save()
+            break
+            
+        default:
+            return
         }
     }
 

@@ -49,7 +49,6 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         
         executeSearch()
         
-        
         // place the Pin on the map
         let annotation = MKPointAnnotation()
         annotation.coordinate = CLLocationCoordinate2D(latitude: pin!.latitude, longitude: pin!.longitude)
@@ -62,11 +61,14 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         // if there's no photo yet then we upload photos
         if !photoExist {
             print("retrieve images")
-            client.displayImageFromFlickrBySearch(annotation.coordinate.latitude, longitude: annotation.coordinate.longitude, completionHandler: { (results, errorString) in
-                self.generatePhotos(self.pin!, imageURLs: results)
+            self.client.displayImageFromFlickrBySearch(annotation.coordinate.latitude, longitude: annotation.coordinate.longitude, completionHandler: { (results, errorString) in
+                performUIUpdatesOnMain({ 
+                    self.generatePhotos(self.pin!, imageURLs: results)
+
+                })
             })
         }
-
+        
     }
     
     // will change the size of each cell when the orientation changes
@@ -95,7 +97,9 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         }
                 
         client.displayImageFromFlickrBySearch(pin!.latitude, longitude: pin!.longitude, completionHandler: { (results, errorString) in
-            self.generatePhotos(self.pin!, imageURLs: results)
+            performUIUpdatesOnMain({ 
+                self.generatePhotos(self.pin!, imageURLs: results)
+            })
         })
     }
     
@@ -124,10 +128,12 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
                 print("Just created a photo: \(photo)")
                 
                 // generate photoData from the photo url
-                self.client.getImage(photo.url) { (result, error) in
-                    self.generatePhotoData(photo, data: result)
+                
+                self.client.getImage(photo.url!) { (result, error) in
+                    self.generatePhotoData(photo, data: result!)
                 }
             }
+
         })
     }
     
@@ -153,9 +159,10 @@ class PhotoAlbumViewController: UIViewController, UICollectionViewDelegate, UICo
         
         if photo.imageData != nil {
             cell.photoImageView.image = UIImage(data: photo.imageData!)
-
+            cell.activityIndicator.hidden = true
         } else {
             cell.photoImageView.image = UIImage(named: "noImages")
+            cell.activityIndicator.hidden = false
         }
         
         return cell

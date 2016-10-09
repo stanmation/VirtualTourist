@@ -3,6 +3,7 @@
     <dependencies>
         <deployment identifier="iOS"/>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="11161"/>
+        <capability name="Constraints to layout margins" minToolsVersion="6.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -68,6 +69,9 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="9r5-Db-geZ">
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="117" id="7o4-lf-Q05"/>
+                                </constraints>
                                 <connections>
                                     <outlet property="delegate" destination="Zwz-Ie-Rfu" id="Nn9-pQ-EMx"/>
                                 </connections>
@@ -91,16 +95,24 @@
                                                 <imageView userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="Z1R-RR-DtE">
                                                     <color key="backgroundColor" white="0.0" alpha="1" colorSpace="calibratedWhite"/>
                                                 </imageView>
+                                                <activityIndicatorView opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="750" verticalHuggingPriority="750" animating="YES" style="white" translatesAutoresizingMaskIntoConstraints="NO" id="PCP-EG-5Sh">
+                                                    <color key="color" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                                                </activityIndicatorView>
                                             </subviews>
                                         </view>
                                         <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="calibratedRGB"/>
                                         <constraints>
                                             <constraint firstAttribute="trailing" secondItem="Z1R-RR-DtE" secondAttribute="trailing" id="Fk3-Wb-eQa"/>
+                                            <constraint firstItem="PCP-EG-5Sh" firstAttribute="leading" secondItem="ko0-Sy-52V" secondAttribute="leadingMargin" constant="37" id="Ldk-pX-n0v"/>
                                             <constraint firstItem="Z1R-RR-DtE" firstAttribute="leading" secondItem="ko0-Sy-52V" secondAttribute="leading" id="U4R-zL-nGA"/>
+                                            <constraint firstAttribute="trailingMargin" secondItem="PCP-EG-5Sh" secondAttribute="trailing" constant="37" id="bdf-aa-FbT"/>
                                             <constraint firstAttribute="bottom" secondItem="Z1R-RR-DtE" secondAttribute="bottom" id="fBo-Ln-RaJ"/>
+                                            <constraint firstAttribute="bottomMargin" secondItem="PCP-EG-5Sh" secondAttribute="bottom" constant="37" id="iOW-tj-9WX"/>
                                             <constraint firstItem="Z1R-RR-DtE" firstAttribute="top" secondItem="ko0-Sy-52V" secondAttribute="top" id="zZ8-cN-bsz"/>
+                                            <constraint firstItem="PCP-EG-5Sh" firstAttribute="top" secondItem="ko0-Sy-52V" secondAttribute="topMargin" constant="37" id="zz6-Vs-Vzk"/>
                                         </constraints>
                                         <connections>
+                                            <outlet property="activityIndicator" destination="PCP-EG-5Sh" id="0IX-Y2-m3Y"/>
                                             <outlet property="photoImageView" destination="Z1R-RR-DtE" id="uUk-An-B0C"/>
                                         </connections>
                                     </collectionViewCell>
@@ -131,14 +143,13 @@
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
                         <constraints>
-                            <constraint firstItem="9r5-Db-geZ" firstAttribute="top" secondItem="uVF-53-SGM" secondAttribute="bottom" id="6Fx-tZ-CcE"/>
                             <constraint firstItem="LHG-yt-Laa" firstAttribute="leading" secondItem="77Y-SH-tW0" secondAttribute="leading" id="BYB-ww-sfH"/>
                             <constraint firstAttribute="trailing" secondItem="LHG-yt-Laa" secondAttribute="trailing" id="IhF-8m-fmj"/>
                             <constraint firstItem="c0F-Qm-sXZ" firstAttribute="top" secondItem="LHG-yt-Laa" secondAttribute="bottom" constant="40" id="NWe-dW-uOT"/>
+                            <constraint firstItem="9r5-Db-geZ" firstAttribute="top" secondItem="uVF-53-SGM" secondAttribute="bottom" id="Nbk-a9-lrT"/>
                             <constraint firstItem="LHG-yt-Laa" firstAttribute="top" secondItem="uVF-53-SGM" secondAttribute="bottom" constant="112" id="R2a-Yh-gT3"/>
-                            <constraint firstItem="LHG-yt-Laa" firstAttribute="top" secondItem="9r5-Db-geZ" secondAttribute="bottom" constant="-2" id="hBL-ZV-ODe"/>
-                            <constraint firstItem="9r5-Db-geZ" firstAttribute="leading" secondItem="77Y-SH-tW0" secondAttribute="leading" id="rf7-tG-Mdw"/>
-                            <constraint firstAttribute="trailing" secondItem="9r5-Db-geZ" secondAttribute="trailing" id="sWc-Kt-Ebe"/>
+                            <constraint firstItem="9r5-Db-geZ" firstAttribute="leading" secondItem="77Y-SH-tW0" secondAttribute="leading" id="YeS-hc-M6n"/>
+                            <constraint firstAttribute="trailing" secondItem="9r5-Db-geZ" secondAttribute="trailing" id="wgc-Wb-HQX"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" title="Virtual Tourist" id="AZm-5G-zdO"/>

@@ -98,7 +98,7 @@ class Client: NSObject {
             }
             
             // pick a random page!
-            let pageLimit = min(totalPages, 40)
+            let pageLimit = min(totalPages, 266)
             let randomPage = Int(arc4random_uniform(UInt32(pageLimit))) + 1
             self.displayImageFromFlickrBySearch(methodParameters, withPageNumber: randomPage) { (results, errorString) in
                 completionHandler(results: results, errorString: errorString)
@@ -120,8 +120,8 @@ class Client: NSObject {
         
         // create session and request
         let session = NSURLSession.sharedSession()
-        let request = NSURLRequest(URL: flickrURLFromParameters(methodParameters))
-        
+        let request = NSURLRequest(URL: flickrURLFromParameters(methodParametersWithPageNumber))
+                
         // create network request
         let task = session.dataTaskWithRequest(request) { (data, response, error) in
             
@@ -193,6 +193,7 @@ class Client: NSObject {
                     }
                     
                     imageUrlStrings.append(imageUrlString)
+                    
             
                 }
                 
@@ -206,25 +207,43 @@ class Client: NSObject {
         task.resume()
     }
     
-    func getImage(imageURL: String!, completionHandlerForGetImage: (result: NSData, error: NSError?) -> Void) {
-        print("getImage")
+//    func getImage(imageURL: String!, completionHandlerForGetImage: (result: NSData, error: NSError?) -> Void) {
+//        print("getImage")
+//        
+//        // get the URL of the image
+//        let url = NSURL(string: imageURL)
+//        
+//        // create a queue from sctratch
+//        let download = dispatch_queue_create("download", nil)
+//        
+//        // call dispatch async to send a closure to the downloads queue
+//        
+//        dispatch_async(download) { () -> Void in
+//            
+//            // download NSData and turn it into a UIImage
+//            if let data = NSData(contentsOfURL: url!) {
+//                completionHandlerForGetImage(result: data, error: nil)
+//            }
+//        }
+//        
+//    }
+    
+    func getImage(let imagePath:String, completionHandler: (imageData: NSData?, errorString: String?) -> Void){
+        let session = NSURLSession.sharedSession()
+        let imgURL = NSURL(string: imagePath)
+        let request: NSURLRequest = NSURLRequest(URL: imgURL!)
         
-        // get the URL of the image
-        let url = NSURL(string: imageURL)
-        
-        // create a queue from sctratch
-        let download = dispatch_queue_create("download", nil)
-        
-        // call dispatch async to send a closure to the downloads queue
-        
-        dispatch_async(download) { () -> Void in
+        let task = session.dataTaskWithRequest(request) {data, response, downloadError in
             
-            // download NSData and turn it into a UIImage
-            if let data = NSData(contentsOfURL: url!) {
-                completionHandlerForGetImage(result: data, error: nil)
+            if let error = downloadError {
+                completionHandler(imageData: nil, errorString: "Could not download image \(imagePath)")
+            } else {
+                
+                completionHandler(imageData: data, errorString: nil)
             }
         }
         
+        task.resume()
     }
 
     
